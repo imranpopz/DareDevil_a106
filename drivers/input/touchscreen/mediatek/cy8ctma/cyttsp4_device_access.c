@@ -1,7 +1,4 @@
-/* BEGIN PN:DTS2013051703879 ,Added by l00184147, 2013/5/17*/
 //add Touch driver for G610-T11
-/* BEGIN PN:DTS2013012601133 ,Modified by l00184147, 2013/1/26*/ 
-/* BEGIN PN:SPBB-1218 ,Added by l00184147, 2012/12/20*/
 /*
  * cyttsp4_device_access.c
  * Cypress TrueTouch(TM) Standard Product V4 Device Access module.
@@ -50,9 +47,7 @@
 #include <linux/workqueue.h>
 #include "cyttsp4_device_access.h"
 #include "cyttsp4_regs.h"
-/* BEGIN PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
-//#include <linux/hardware_self_adapt.h>
-/* END PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
+#include <linux/hardware_self_adapt.h>
 
 #define CY_MAX_CONFIG_BYTES    256
 #define CY_CMD_INDEX             0
@@ -1238,12 +1233,14 @@ static int cyttsp4_grpdata_store_tthe_test_regs(struct device *dev, u8 *ic_buf,
 			if (rc < 0)
 				dev_err(dev, "%s: %s r=%d\n", __func__,
 						"Fail test cmd handshake", rc);
+			break;
 		case CY_NULL_CMD_LOW_POWER:
 			dev_vdbg(dev, "%s: try null cmd low power\n", __func__);
 			rc = _cyttsp4_cmd_toggle_lowpower(dad);
 			if (rc < 0)
 				dev_err(dev, "%s: %s r=%d\n", __func__,
 					"Fail test cmd toggle low power", rc);
+			break;
 		default:
 			break;
 		}
@@ -1458,7 +1455,6 @@ static int _cyttsp4_ret_scan_data_cmd(struct device *dev, int readOffset,
 	return rc;
 }
 
-/* BEGIN PN:SPBB-1276  ,Modified by l00184147, 2013/3/7*/ 
 /*
 * SysFs grpdata show function implementation of group 6.
 * Prints contents of the touch parameters a row at a time.
@@ -1631,7 +1627,6 @@ cyttsp4_get_panel_data_show_err_release:
 cyttsp4_get_panel_data_show_err_sysfs:
          return printIdx;
 }
-/* END PN:SPBB-1276  ,Modified by l00184147, 2013/3/7*/
 
 /*
  * SysFs grpdata show function implementation of group 6.
@@ -1682,10 +1677,8 @@ cyttsp4_get_panel_data_store_exit:
 static DEVICE_ATTR(get_panel_data, S_IRUSR | S_IWUSR,
 	cyttsp4_get_panel_data_show, cyttsp4_get_panel_data_store);
 
-/* BEGIN PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
 static struct device * access_dev = NULL;
-
-static int getHighPart(int num)
+static unsigned int getHighPart(int num)
 {
 	switch(num)
 	{
@@ -1701,7 +1694,6 @@ static int getHighPart(int num)
 	}
 
 }
-/* BEGIN PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 #define MAX_CAPACITANCE_LEN 	4096 
 static	int  g_capacitance_count = 0;
 static char *g_touch_capacitance = NULL;
@@ -1711,37 +1703,48 @@ static void record_tp_capacitance(enum check_data_type type, int value)
 	sprintf(buf, "%d\t", value);
 	strcat(g_touch_capacitance, buf);
 	g_capacitance_count++;
-	if(0 == g_capacitance_count % 13)
+	hw_product_type board_id;
+	board_id=get_hardware_product_version();
+	if((board_id & HW_VER_MAIN_MASK) == HW_G6T_VER)
+		{
+			if(0 == g_capacitance_count % 21)
+			{
+				strcat(g_touch_capacitance, "\n");
+			}
+		}
+	else if (((board_id & HW_VER_MAIN_MASK) == HW_H30T_VER) || ((board_id & HW_VER_MAIN_MASK) == HW_H30U_VER))
+		{
+			if(0 == g_capacitance_count % 13)
+			{
+				strcat(g_touch_capacitance, "\n");
+			}
+		}
+	else
 	{
-		strcat(g_touch_capacitance, "\n");
+		if(0 == g_capacitance_count % 28)
+		{
+			strcat(g_touch_capacitance, "\n");
+		}
 	}
-
 	return;
 }
-/* END PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 static int out_of_range(enum check_data_type type, int value)
 {
-	//hw_product_type board_id;
-	//board_id=get_hardware_product_version();
-	/* BEGIN PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
+	hw_product_type board_id;
+	board_id=get_hardware_product_version();
 	record_tp_capacitance(type, value);
-	/* END PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
-	if(1/*(board_id & HW_VER_MAIN_MASK) == HW_G750_VER*/)
+	if(((board_id & HW_VER_MAIN_MASK) == HW_G750_VER) && (board_id != HW_G750_VER_F ))
 		{	
 			switch(type)
 			{
 				case CY_CHK_MUT_RAW:
-					/* BEGIN PN:DTS2013071007839 ,Modified by l00184147, 2013/7/11*/
-					if(value < -1900 || value > -300)
-					/* END PN:DTS2013071007839 ,Modified by l00184147, 2013/7/11*/ 
+					if(value < -3000 || value > -1200)
 					{
 						return 1;
 					}
 					break;
 				case CY_CHK_SELF_RAW:
-					/* BEGIN PN:DTS2013071007839 ,Modified by l00184147, 2013/7/11*/ 
-					if(value < -500 || value > 1300)
-					/* END PN:DTS2013071007839 ,Modified by l00184147, 2013/7/11*/ 
+					if(value < -600 || value > 1300)
 					{
 						return 1;
 					}
@@ -1750,6 +1753,70 @@ static int out_of_range(enum check_data_type type, int value)
 				return 0;
 			}
 		}
+	else if(board_id == HW_G750_VER_F)
+		{
+			switch(type)
+			{
+				case CY_CHK_MUT_RAW:
+					if(value < -3600 || value > -1400)
+					{
+						return 1;
+					}
+					break;
+				case CY_CHK_SELF_RAW:
+					if(value < -1100 || value > 2400)
+					{
+						return 1;
+					}
+					break;
+				default:
+				return 0;
+			}
+		}
+	else if(((board_id & HW_VER_MAIN_MASK) == HW_H30T_VER)||((board_id & HW_VER_MAIN_MASK) == HW_H30U_VER))
+	{
+		switch(type)
+		{
+			case CY_CHK_MUT_RAW:
+				if(value < -3000 || value > -1200)
+				{
+					return 1;
+				}
+				break;
+			case CY_CHK_SELF_RAW:
+				if(value < -600 || value > 1300)
+				{
+					return 1;
+				}
+				break;
+			default:
+				return 0;
+		}
+	}
+	if((board_id & HW_VER_MAIN_MASK) == HW_G6T_VER)
+		{
+			switch(type)
+			{
+				case CY_CHK_MUT_RAW:
+					if(value < -200 || value > 1600)
+					{
+						return 1;
+					}
+					break;
+				case CY_CHK_SELF_RAW:
+					if(value < -1400 || value > 1400)
+					{
+						return 1;
+					}
+					break;
+				default:
+					return 0;
+			}
+		}
+	else
+	{
+		printk("%s:distinguish boardid erroor \n",__func__);
+	}
 	return 0;
 }
 
@@ -1955,8 +2022,6 @@ static int cyttsp4_get_data_and_check(struct device* dev, retrieve_func ret_func
 	dad->ic_buf[CY_CMD_RET_PNL_OUT_ELMNT_SZ_OFFS_L + cmdParam_ofs] =
 		LOW_BYTE(readElementOffset);
 
-	if (rc < 0)
-		goto cyttsp4_get_panel_data_show_err_sysfs;
 
 	
 	rc = cyttsp4_check_range(type, endian, elementSize, dad, dataIdx);
@@ -1981,11 +2046,16 @@ static int cyttsp4_check_raw_data(struct device *dev)
 	int rc = 0;
 	int i = 0;
 	enum check_data_type type;
-	//hw_product_type board_id;
-	//board_id=get_hardware_product_version();
+	hw_product_type board_id;
+	board_id=get_hardware_product_version();
 	
-	if(1/*(board_id & HW_VER_MAIN_MASK) == HW_G750_VER*/)
+	if((board_id & HW_VER_MAIN_MASK) == HW_G750_VER)
 		{
+			/* Start scan */
+			rc = _cyttsp4_exec_scan_cmd(dev);
+				if (rc < 0){
+					return 0;
+			}
 			for(i = 0; i < 2; ++i){
    				if(0 == i)
 				{	
@@ -1996,14 +2066,10 @@ static int cyttsp4_check_raw_data(struct device *dev)
 				else if(1==i)
 				{	
 					type = CY_CHK_SELF_RAW;
-					dad->heatmap.numElement = 16;
+					dad->heatmap.numElement = 44;
 					dad->heatmap.dataType = CY_SELF_RAW;
 				}
 				/* Start scan */
-				rc = _cyttsp4_exec_scan_cmd(dev);
-				if (rc < 0){
-					return 0;
-				}
 				/* retrieve scan data */
 				rc = cyttsp4_get_data_and_check(dev,  _cyttsp4_ret_scan_data_cmd, type, CY_CMD_IN_DATA_OFFSET_VALUE);
 				if(rc < 0)
@@ -2012,6 +2078,67 @@ static int cyttsp4_check_raw_data(struct device *dev)
 				}
    			}
 		}
+	else if(((board_id & HW_VER_MAIN_MASK) == HW_H30T_VER)||((board_id & HW_VER_MAIN_MASK) == HW_H30U_VER))
+	{
+			rc = _cyttsp4_exec_scan_cmd(dev);
+				if (rc < 0){
+					return 0;
+			}
+			for(i = 0; i < 2; ++i){
+				if(0 == i)
+				{
+					type = CY_CHK_MUT_RAW;
+					dad->heatmap.numElement = 312;
+					dad->heatmap.dataType = CY_MUT_RAW;
+				}
+				else if(1==i)
+				{
+					type = CY_CHK_SELF_RAW;
+					dad->heatmap.numElement = 13;
+					dad->heatmap.dataType = CY_SELF_RAW;
+				}
+
+				/* retrieve scan data */
+				rc = cyttsp4_get_data_and_check(dev,  _cyttsp4_ret_scan_data_cmd, type, CY_CMD_IN_DATA_OFFSET_VALUE);
+				if(rc < 0)
+				{
+					return -1;
+				}
+			}
+	}
+	else if((board_id & HW_VER_MAIN_MASK) == HW_G6T_VER)
+		{
+			rc = _cyttsp4_exec_scan_cmd(dev);
+				if (rc < 0){
+					return 0;
+				}
+			for(i = 0; i < 2; ++i){
+				if(0 == i)
+				{
+					type = CY_CHK_MUT_RAW;
+					dad->heatmap.numElement = 231;
+					dad->heatmap.dataType = CY_MUT_RAW;
+				}
+				else if(1==i)
+				{
+					type = CY_CHK_SELF_RAW;
+					dad->heatmap.numElement = 32;
+					dad->heatmap.dataType = CY_SELF_RAW;
+				}
+
+				/* retrieve scan data */
+				rc = cyttsp4_get_data_and_check(dev,  _cyttsp4_ret_scan_data_cmd, type, CY_CMD_IN_DATA_OFFSET_VALUE);
+				if(rc < 0)
+				{
+					return -1;
+				}
+		
+			}
+		}
+	else
+	{
+		printk("%s:distinguish boardid error \n",__func__);
+	}
 	printk("%s:rc = %d\n", __func__, rc);
    return rc;
 }
@@ -2032,7 +2159,6 @@ static inline void cyttsp4_out_to_buf(int ret, char ** buf)
 	}
 }
 
-/* BEGIN PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 static int cyttsp4_check_short_data(struct device *dev)
 {
 	struct cyttsp4_device_access_data *dad = dev_get_drvdata(dev);
@@ -2069,8 +2195,47 @@ cyttsp4_check_short_data_error:
 	mutex_unlock(&dad->sysfs_lock);
 	return rc;
 }
-/* END PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
-/* BEGIN PN:DTS2013062405322 ,Modified by l00184147, 2013/6/24*/
+static int cyttsp4_check_open_data(struct device *dev)
+{
+	struct cyttsp4_device_access_data *dad = dev_get_drvdata(dev);
+	int i;
+	int num_read;
+	int rc=1;
+	int rc1=1;
+	char* grpdata_initbaseline = "0x0A,0x05";
+
+	mutex_lock(&dad->sysfs_lock);
+	dev_vdbg(dev, "%s: grpnum=%d grpoffset=%u\n",__func__, dad->ic_grpnum, dad->ic_grpoffset);
+
+	num_read = cyttsp4_grpdata_show_functions[dad->ic_grpnum] (dev,
+	dad->ic_buf, CY_MAX_PRBUF_SIZE);
+
+	if (num_read < 0) {
+	rc = num_read;
+	if (num_read == -ENOSYS) {
+	dev_err(dev, "%s: Group %d is not implemented.\n",__func__, dad->ic_grpnum);
+	goto cyttsp4_check_open_data_error;
+	}
+	dev_err(dev, "%s: Cannot read Group %d Data.\n",__func__, dad->ic_grpnum);
+	goto cyttsp4_check_open_data_error;
+	}
+
+	for (i = 0; i < num_read; i++)
+	printk("buf[%d]=0x%X\n",i,dad->ic_buf[i]);
+
+	if (1==dad->ic_buf[2])
+	rc=-1;
+
+cyttsp4_check_open_data_error:
+	mutex_unlock(&dad->sysfs_lock);
+	/*Send CAT command for initialize baseline, it's required after open test*/
+	rc1 = cyttsp4_ic_grpdata_store(dev, NULL, grpdata_initbaseline, strlen(grpdata_initbaseline));
+	if (rc1 < 0) {
+	rc1 = 0;//use this to justify what to output to the user-space buf
+	dev_err(dev, "%s: Error on cyttsp4_ic_grpdata_store r=%d\n",__func__, rc1);
+	}
+	return rc;
+}
 int  cyttsp4_get_panel_data_check(char **buf)
 {
 	int rc = 0;
@@ -2081,11 +2246,15 @@ int  cyttsp4_get_panel_data_check(char **buf)
 	char* grpnum_selftest = "13";
 	char* status_size_selftest = "0x00,0x02,0x04,0x00";
 	char* grpdata_shorttest = "0x07,0x04";
+	char* grpdata_opentest = "0x07,0x03";
 	char* grpdata_handshake = "0x00,0x03";
 	char* status_size_normal = "0x00,0x02,0x01,0x00";
 	struct cyttsp4_device_access_data *dad = dev_get_drvdata(access_dev);
 	struct device * dev = access_dev;
-	
+	char open_test_buf[25]={0};
+	char short_test_buf[25]={0};
+	hw_product_type board_id;
+	board_id=get_hardware_product_version();
 	rc = cyttsp4_ic_grpnum_store(dev, NULL, grpnum, strlen(grpnum));
 	if (rc < 0) {
 		rc = 0;//use this to justify what to output to the user-space buf
@@ -2113,15 +2282,6 @@ int  cyttsp4_get_panel_data_check(char **buf)
 	if(rc <= 0){	
 		goto cyttsp4_get_panel_data_show_err_release;
 	}
-
-	rc= cyttsp4_release_exclusive(dad->ttsp);
-       if (rc< 0) {
-	   	rc = 0;//use this to justify what to output to the user-space buf
-       	dev_err(dev, "%s: Error on release exclusive r=%d\n",
-                                     __func__, rc);
-             	goto exit;
-	}
-
 	/*set group number to 13*/
 	rc = cyttsp4_ic_grpnum_store(dev, NULL, grpnum_selftest, strlen(grpnum_selftest));
 	if (rc < 0) {
@@ -2139,7 +2299,21 @@ int  cyttsp4_get_panel_data_check(char **buf)
 				__func__, rc);
 		goto exit;
 	}
+	if((board_id & HW_VER_MAIN_MASK) == HW_G6T_VER)
+		{
+			/*Send CAT command for open test*/
+			rc = cyttsp4_ic_grpdata_store(dev, NULL, grpdata_opentest, strlen(grpdata_opentest));
+			if (rc < 0) {
+				rc = 0;//use this to justify what to output to the user-space buf
+				dev_err(dev, "%s: Error on cyttsp4_ic_grpdata_store r=%d\n",__func__, rc);
+				goto exit;
+			}			 
 
+			rc=cyttsp4_check_open_data(dev);
+			if(rc < 0){
+				goto cyttsp4_check_open_data_err_release;
+				}
+		}
 	/*Send CAT command for short test*/
 	rc = cyttsp4_ic_grpdata_store(dev, NULL, grpdata_shorttest, strlen(grpdata_shorttest));
 	if (rc < 0) {
@@ -2157,10 +2331,17 @@ int  cyttsp4_get_panel_data_check(char **buf)
 
 	cyttsp4_out_to_buf(rc, buf);
 	need_output = false;
+	rc= cyttsp4_release_exclusive(dad->ttsp);
+       if (rc< 0) {
+	   	rc = 0;//use this to justify what to output to the user-space buf
+	   	dev_err(dev, "%s: Error on release exclusive r=%d\n",
+                                    __func__, rc);
+	}
 cyttsp4_get_panel_data_show_err_release:
 	if(need_output){
 		cyttsp4_out_to_buf(rc, buf);
 		need_output = false;
+		dev_err(dev, "%s: raw data check fail\n",__func__);
 		rc= cyttsp4_release_exclusive(dad->ttsp);
        	if (rc< 0) {
 	   		rc = 0;//use this to justify what to output to the user-space buf
@@ -2169,9 +2350,34 @@ cyttsp4_get_panel_data_show_err_release:
              goto exit; 
          	}
 	}
+cyttsp4_check_open_data_err_release:
+	if(need_output){
+		cyttsp4_out_to_buf(rc, buf);
+		need_output = false;
+		dev_err(dev, "%s: open_data check fail\n",__func__);
+		sprintf(open_test_buf, "\n%s\n", "open test fail");
+		strcat(g_touch_capacitance, open_test_buf);
+		rc= cyttsp4_release_exclusive(dad->ttsp);
+		if (rc< 0) {
+			rc = 0;//use this to justify what to output to the user-space buf
+			dev_err(dev, "%s: Error on release exclusive r=%d\n",__func__, rc);
+			goto exit;
+			}
+	}
 cyttsp4_check_short_data_err_release:
 	if(need_output){
 		cyttsp4_out_to_buf(rc, buf);
+		need_output = false;
+		dev_err(dev, "%s: short_data check fail\n",__func__);
+		sprintf(short_test_buf, "\n%s\n", "short test fail");
+		strcat(g_touch_capacitance, short_test_buf);
+		rc= cyttsp4_release_exclusive(dad->ttsp);
+		if (rc< 0) {
+			rc = 0;//use this to justify what to output to the user-space buf
+			dev_err(dev, "%s: Error on release exclusive r=%d\n",
+                                    __func__, rc);
+			goto exit;
+			}
 	}
 
 	/*Send Null command to do command handshake*/
@@ -2212,8 +2418,6 @@ cyttsp4_check_short_data_err_release:
  exit:
 	return rc;
 }
-/* END PN:DTS2013062405322 ,Modified by l00184147, 2013/6/24*/
-/* BEGIN PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 
 static void cyttsp4_fw_calibrate(struct cyttsp4_device *ttsp)
 {
 	struct device *dev = &ttsp->dev;
@@ -2305,7 +2509,6 @@ exit:
 	dev_info(dev, "%s\n", __func__);
 	pm_runtime_put(dev);
 }
-/* END PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 
 /*touchpanel mmi test begin*/
 static char *touch_mmi_test_result = NULL;
 static ssize_t cyttsp4_touch_mmi_test_show(struct device *dev,
@@ -2316,11 +2519,8 @@ static ssize_t cyttsp4_touch_mmi_test_show(struct device *dev,
 		pr_err("touch_mmi_test dev is null\n");
 		return -EINVAL;
 	}
-	/* BEGIN PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 
 	struct cyttsp4_device_access_data *dad = dev_get_drvdata(dev);
-	/* END PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 
 	
-	/* BEGIN PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 	/* if g_touch_capacitance is null, alloc memory for it*/
 	if(NULL == g_touch_capacitance)
 	{	
@@ -2334,13 +2534,11 @@ static ssize_t cyttsp4_touch_mmi_test_show(struct device *dev,
 	/*reset the g_capacitance_count and g_touch_capacitance */
 	g_capacitance_count= 0;
 	memset(g_touch_capacitance, 0, MAX_CAPACITANCE_LEN);
-	/* END PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 	
 	rc = cyttsp4_get_panel_data_check(&touch_mmi_test_result);
 	if(rc < 0){
 		pr_err("cyttsp4_get_panel_data_check error\n");
 	}
-	/* BEGIN PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 
 	if(0==strcmp(touch_mmi_test_result,"Fail")){
 		pr_err("cyttsp4_get_panel_data_check Fail,calibrate and attempt to test again\n");
 
@@ -2355,21 +2553,17 @@ static ssize_t cyttsp4_touch_mmi_test_show(struct device *dev,
 		pr_err("cyttsp4_get_panel_data_check error\n");
 		}		
 	}
-	/* END PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 	
 	printk("touch_mmi_test_result : %d\n", rc);
 	printk("touch_mmi_test_result : %s\n", touch_mmi_test_result);
 	
-	/* BEGIN PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 	/*if someting is error, we still want to report info, because it is useful for debugging*/
 	rc = sprintf(buf, "%s\n%s", touch_mmi_test_result,g_touch_capacitance);
 	kfree(g_touch_capacitance);
 	g_touch_capacitance = NULL;
 	return rc;
-	/* END PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 }
 static DEVICE_ATTR(touch_mmi_test, 0664,
 				   cyttsp4_touch_mmi_test_show, NULL);
-/* END PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
 
 #ifdef CONFIG_PM_SLEEP
 static int cyttsp4_device_access_suspend(struct device *dev)
@@ -2393,13 +2587,11 @@ static int cyttsp4_device_access_resume(struct device *dev)
 }
 #endif
 
-/* BEGIN PN:SPBB-1257 ,Deteled by l00184147, 2013/2/21*/
 //Don't use the pm operation with PM sleep
 //static const struct dev_pm_ops cyttsp4_device_access_pm_ops = {
 //     SET_SYSTEM_SLEEP_PM_OPS(cyttsp4_device_access_suspend,
 //                     cyttsp4_device_access_resume)
 //};
-/* END PN:SPBB-1257 ,Deteled by l00184147, 2013/2/21*/
 
 static int cyttsp4_setup_sysfs(struct cyttsp4_device *ttsp)
 {
@@ -2488,7 +2680,6 @@ static int cyttsp4_device_access_probe(struct cyttsp4_device *ttsp)
 		goto cyttsp4_device_access_probe_data_failed;
 	}
 
-	/* BEGIN PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
 	access_dev = dev;
 	rc = device_create_file(dev, &dev_attr_touch_mmi_test);
 	if (rc) {
@@ -2496,7 +2687,6 @@ static int cyttsp4_device_access_probe(struct cyttsp4_device *ttsp)
 				__func__);
 		goto cyttsp4_create_touch_mmi_test_failed;
 	}
-	/* END PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
 
 	mutex_init(&dad->sysfs_lock);
 	init_waitqueue_head(&dad->wait_q);
@@ -2535,10 +2725,8 @@ static int cyttsp4_device_access_probe(struct cyttsp4_device *ttsp)
 	pm_runtime_suspend(dev);
 	pm_runtime_disable(dev);
 	dev_set_drvdata(dev, NULL);
-	kfree(dad);
- /* BEGIN PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
  cyttsp4_create_touch_mmi_test_failed:
- /* END PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
+	kfree(dad);
  cyttsp4_device_access_probe_data_failed:
 	dev_err(dev, "%s failed.\n", __func__);
 	return rc;
@@ -2590,10 +2778,8 @@ static struct cyttsp4_driver cyttsp4_device_access_driver = {
 		.name = CYTTSP4_DEVICE_ACCESS_NAME,
 		.bus = &cyttsp4_bus_type,
 		.owner = THIS_MODULE,
-		/* BEGIN PN:SPBB-1257 ,Deteled by l00184147, 2013/2/21*/
 		//no longer to use pm operation
 		//.pm = &cyttsp4_device_access_pm_ops,
-		/* END PN:SPBB-1257 ,Deteled by l00184147, 2013/2/21*/
 	},
 };
 
@@ -2666,9 +2852,7 @@ static int __init cyttsp4_device_access_init(void)
 	return 0;
 
 fail_unregister_devices:
-	/* BEGIN PN:DTS2013033006231 ,Modified by l00184147, 2013/3/27*/
 	for (i--; i >= 0; i--) {
-	/* END PN:DTS2013033006231 ,Modified by l00184147, 2013/3/27*/
 		cyttsp4_unregister_device(cyttsp4_device_access_infos[i].name,
 			cyttsp4_device_access_infos[i].core_id);
 		pr_info("%s: Unregistering device access device for core_id: %s\n",
@@ -2696,6 +2880,3 @@ module_exit(cyttsp4_device_access_exit);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Cypress TrueTouch(R) Standard Product Device Access Driver");
 MODULE_AUTHOR("Cypress Semiconductor");
-/* END PN:SPBB-1218 ,Added by l00184147, 2012/12/20*/
-/* END PN:DTS2013012601133 ,Modified by l00184147, 2013/1/26*/ 
-/* END PN:DTS2013051703879 ,Added by l00184147, 2013/5/17*/

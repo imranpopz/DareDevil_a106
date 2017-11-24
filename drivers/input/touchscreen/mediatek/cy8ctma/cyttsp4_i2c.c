@@ -1,9 +1,4 @@
-/* BEGIN PN:DTS2013051703879 ,Added by l00184147, 2013/5/17*/
 //add Touch driver for G610-T11
-/* BEGIN PN:DTS2013012601133 ,Modified by l00184147, 2013/1/26*/ 
-/* BEGIN PN:DTS2013011401860  ,Modified by l00184147, 2013/1/14*/
-/* BEGIN PN:SPBB-1218 ,Added by l00184147, 2012/12/20*/
-/* BEGIN PN:SPBB-1226  ,Added by f00184246, 2012/1/05*/
 /*
  * cyttsp4_i2c.c
  * Cypress TrueTouch(TM) Standard Product V4 I2C Driver module.
@@ -128,7 +123,6 @@ static int cyttsp4_i2c_write(struct cyttsp4_adapter *adap, u8 addr,
 {
 	struct cyttsp4_i2c *ts = dev_get_drvdata(adap->dev);
 	int rc;
-	lmdebug_dump_buf(buf, size, "cyttsp4_i2c_write");
 
 	pm_runtime_get_noresume(adap->dev);
 	mutex_lock(&ts->lock);
@@ -153,7 +147,6 @@ static int cyttsp4_i2c_read(struct cyttsp4_adapter *adap, u8 addr,
 	mutex_unlock(&ts->lock);
 	pm_runtime_put_noidle(adap->dev);
 
-	lmdebug_dump_buf(buf, size, "cyttsp4_i2c_read");
 
 	return rc;
 }
@@ -194,7 +187,7 @@ static int cyttsp4_i2c_probe(struct i2c_client *client,
 	ts_i2c->client = client;
 	client->dev.bus = &i2c_bus_type;
 	i2c_set_clientdata(client, ts_i2c);
-	//dev_set_drvdata(&client->dev, ts_i2c);	//MOD BY ZHONG: no need??
+	dev_set_drvdata(&client->dev, ts_i2c);
 
 	if (adap_id)
 		id = adap_id;
@@ -219,7 +212,7 @@ static int cyttsp4_i2c_probe(struct i2c_client *client,
 
 add_adapter_err:
 	pm_runtime_disable(&client->dev);
-	//dev_set_drvdata(&client->dev, NULL);		//MOD BY ZHONG: no need??
+	dev_set_drvdata(&client->dev, NULL);
 	i2c_set_clientdata(client, NULL);
 	kfree(ts_i2c);
 error_alloc_data_failed:
@@ -284,8 +277,3 @@ MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Cypress TrueTouch(R) Standard Product (TTSP) I2C driver");
 MODULE_AUTHOR("Cypress");
 MODULE_DEVICE_TABLE(i2c, cyttsp4_i2c_id);
-/* END PN:SPBB-1226  ,Added by f00184246, 2012/1/05*/
-/* END PN:SPBB-1218 ,Added by l00184147, 2012/12/20*/
-/* END PN:DTS2013011401860  ,Modified by l00184147, 2013/1/14*/
-/* END PN:DTS2013012601133 ,Modified by l00184147, 2013/1/26*/ 
-/* END PN:DTS2013051703879 ,Added by l00184147, 2013/5/17*/
