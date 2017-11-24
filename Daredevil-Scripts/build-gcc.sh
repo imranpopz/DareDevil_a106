@@ -36,31 +36,31 @@ echo=e
 
 # If the google toolchain 4.8 doesn't exist, clone it. 
 # If exists, export the toolchain path
-if [ ! -f ../arm-eabi-4.8/bin/arm-eabi-addr2line ]
+if [ ! -f /home/popz/Desktop/toolchain/arm-eabi-4.8/bin/arm-eabi-addr2line ]
 then
     $e -e "####################################"
     $e -e "#       TOOLCHAIN NOT FOUND!       #"
     $e -e "####################################"
 cd ..
 git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8
-export ARCH=arm CROSS_COMPILE=../arm-eabi-4.8/bin/arm-eabi-
+export ARCH=arm CROSS_COMPILE=/home/popz/Desktop/toolchain/arm-eabi-4.8/bin/arm-eabi-
 else
-export ARCH=arm CROSS_COMPILE=../arm-eabi-4.8/bin/arm-eabi-
+export ARCH=arm CROSS_COMPILE=/home/popz/Desktop/toolchain/arm-eabi-4.8/bin/arm-eabi-
 fi
 
 
 # User and Build Host
-export KBUILD_BUILD_USER=manjotsidhu
+export KBUILD_BUILD_USER=ImranPopZ
 export KBUILD_BUILD_HOST=GAD
 
 
 # Read the lineage/AOSP DEFCONFIG
 $e -e "${orange} Read the defconfig file ..."
-$m a106_defconfig
+$m h30u10_defconfig
 
 
 # Build zImage (Thanks to Joel for the all command)
-$e -e "${orange} Building Daredevil Kernel for a106 ..."
+$e -e "${orange} Building Daredevil Kernel for h30u10.."
 $m -j2 zImage
 
 

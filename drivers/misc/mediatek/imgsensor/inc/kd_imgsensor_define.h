@@ -186,6 +186,10 @@ typedef enum {
     SENSOR_FEATURE_SET_MIN_MAX_FPS,
     SENSOR_FEATURE_GET_PDAF_INFO,
     SENSOR_FEATURE_GET_PDAF_DATA,
+	  SENSOR_FEATURE_VALIDATE_OTP,//check OTP exist
+  SENSOR_FEATURE_GET_AF_OTP,//Get AF otp data from sensor driver
+  SENSOR_FEATURE_GET_AWB_OTP,//Get WB otp data from sensor driver
+  SENSOR_FEATURE_GET_OTP_FLAG,//Get otp data flag from sensor driver
     SENSOR_FEATURE_MAX
 } ACDK_SENSOR_FEATURE_ENUM;
 
@@ -370,6 +374,8 @@ typedef struct {
     MUINT8 SensorPacketECCOrder;
     SENSOR_MIPI_TYPE_ENUM MIPIsensorType;
     MUINT8 SensorCaptureOutputJPEG; /* JPEG file or not? */
+    MUINT16  SensorHorFOV;
+	MUINT16  SensorVerFOV;
     MUINT8 SensorModeNum;
     MUINT8 IHDR_Support;
     MUINT16 IHDR_LE_FirstLine;
@@ -822,7 +828,7 @@ typedef struct {
 //
 
 //typedef
-//#define kal_uint8 u8
+#define kal_uint8 u8
 
 /* #define MSDK_SCENARIO_ID_ENUM               ACDK_SCENARIO_ID_ENUM */
 #define MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT  ACDK_SENSOR_EXPOSURE_WINDOW_STRUCT
