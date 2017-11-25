@@ -966,13 +966,93 @@ config MTK_AUDIO_EXTCODEC_SUPPORT
 	  If you say Y, enable MTK_AUDIO_EXTCODEC_SUPPORT driver.
 
 # ALSPS sensor
-config MTK_AP3220
-	bool "MTK_AP3220 for MediaTek package"
+config MTK_TMD2772_AUTO
+	bool "TMD2772_AUTO for MediaTek package"
 	default n
-		
+
+config MTK_CM36283
+	bool "CM36283 for MediaTek package"
+	default n
+
+config MTK_GP2AP002S00F
+	bool "GP2AP002S00F for MediaTek package"
+	default n
+
+config MTK_APM_16D
+	bool "APM_16D for MediaTek package"
+	default n
+
+config MTK_EPL2182
+	bool "EPL2182 for MediaTek package"
+	default n
+
+config MTK_TMD2771_HW_AUTO
+	bool "MTK_TMD2771_HW_AUTO for MediaTek package"
+	default n
+
+config MTK_EPL2182_NEW
+	bool "EPL2182 for MediaTek package"
+	default n
+
+config MTK_STK3X1X
+	bool "STK3X1X for MediaTek package"
+	default n
+
+config MTK_CM36652_NEW
+	bool "cm36652 for MediaTek package"
+	default n
+
+config MTK_APDS9930
+	bool "APDS9930 for MediaTek package"
+	default n
+
+config MTK_CM3232_NEW
+	bool "CM3232 for MediaTek package"
+	default n
+
+config MTK_APDS9930_NEW
+	bool "APDS9930_NEW for MediaTek package"
+	default n
+
 # Accelerometer sensor
-config MTK_BMA222E_AUTO
-        bool "MTK_BMA222E_AUTO for MediaTek package"
+config MTK_KXCJK_1013_AUTO
+	bool "KXCJK_1013_AUTO for MediaTek package"
+	default n
+
+config MTK_LIS3DH_AUTO
+	bool "LIS3DH_AUTO for MediaTek package"
+	default n
+
+config MTK_KXTJ2_1009
+	bool "KXTJ2 1009 for MediaTek package"
+	default n
+
+config MTK_KXTIK1004
+	bool "KXTIK1004 for MediaTek package"
+	default n
+
+config MTK_K2DH
+	bool "K2DH for MediaTek package"
+	default n
+
+config MTK_BMA222E
+	bool "BMA222E for MediaTek package"
+	default n
+
+config MTK_BMA222E_NEW
+	bool "BMA222E for MediaTek package"
+	default n
+
+config MTK_MPU6050G_NEW
+	bool "MPU6050G for MediaTek package"
+	default n
+
+config MTK_BMA250
+	bool "Accelerometer BMA250 for MediaTek package"
+	default n
+
+config MTK_MPU6515A
+        bool "MPU6515A for MediaTek package"
         default n
 
 config MTK_KXTJ2_1009_AUTO
@@ -989,8 +1069,64 @@ config MTK_ST480_AUTO
 	bool "ST480_AUTO for MediaTek package"
 	default n
 
-config MTK_MMC3516X_AUTO
-	bool "MMC3516X_AUTO for MediaTek package"
+config MTK_AKM8963
+	bool "AKM8963 for MediaTek package"
+	default n
+
+config MTK_AKM8963_NEW
+	bool "AKM8963 for MediaTek package"
+	default n
+
+config MTK_AKM09911
+	bool "AKM09911 for MediaTek package"
+	default n
+
+config MTK_HSCDTD006
+	bool "HSCDTD006 for MediaTek package"
+	default n
+
+config MTK_BMM050
+	bool "MTK_BMM050 for MediaTek package"
+	default n
+
+config MTK_BMM050_NEW
+	bool "MTK_BMM050_NEW for MediaTek package"
+	default n
+
+config MTK_BMM050
+	bool "MTK_BMM050 for MediaTek package"
+	default n
+
+config MTK_MMC3416X
+	bool "MTK_MMC3416X for MediaTek package"
+	default n
+
+config MTK_BMA250
+	bool "MTK_BMA250 for MediaTek package"
+	default n
+
+config MTK_BMA050
+	bool "MTK_BMA050 for MediaTek package"
+	default n
+
+config MTK_BMA050_NEW
+	bool "MTK_BMA050_NEW for MediaTek package"
+	default n
+
+config MTK_S2200
+	bool "S2200 for Mediatek package"
+	default n
+
+config MTK_YAS532
+        bool "YAS532 for Mediatek package"
+        default n
+
+config MTK_MMA8452Q_AUTO
+	bool "MMA8452Q_AUTO for MediaTek package"
+	default n
+
+config MTK_KX023_AUTO
+	bool "KX023_AUTO for MediaTek package"
 	default n
 
 # Barometer sensor

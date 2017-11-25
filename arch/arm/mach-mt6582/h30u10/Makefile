@@ -6,17 +6,31 @@ include $(srctree)/drivers/misc/mediatek/Makefile.custom
 ifeq ($(CONFIG_MTK_SENSOR_SUPPORT),y)
 
 # ALSPS (proximity sensor)
-ifeq ($(CONFIG_MTK_CM36283),y)
-obj-y	+=  alsps/cm36283/
+ifeq ($(CONFIG_MTK_EPL2182),y)
+obj-y	+=  alsps/EPL2182/
 endif
-ifeq ($(CONFIG_MTK_TMD2772_AUTO),y)
-obj-y	+=  alsps/tmd2772_auto/
+
+ifeq ($(CONFIG_MTK_TMD2771_HW_AUTO),y)
+obj-y	+=  alsps/tmd2771_HW_auto/
 endif
 
 # Accelerometer
-ifeq ($(CONFIG_MTK_LSM330),y)
-obj-y   +=  accelerometer/lsm330/
+ifeq ($(CONFIG_MTK_BMA222E),y)
+obj-y   +=  accelerometer/bma222E/
 endif
+
+ifeq ($(CONFIG_MTK_MMA8452Q_AUTO),y)
+obj-y   +=  accelerometer/mma8452q_auto/
+endif
+
+ifeq ($(CONFIG_MTK_KX023_AUTO),y)
+obj-y   +=  accelerometer/kx023_auto/
+endif
+
+ifeq ($(CONFIG_MTK_LIS3DH_AUTO),y)
+obj-y   +=  accelerometer/lis3dh_auto/
+endif
+
 
 # Gyroscope
 ifeq ($(CONFIG_MTK_L3GD20),y)
@@ -24,12 +38,10 @@ obj-y   +=  gyroscope/l3gd20/
 endif
 
 # Magnetometer
-ifeq ($(CONFIG_MTK_ST480_AUTO),y)
-obj-y	+=  magnetometer/st480_auto/
+ifeq ($(CONFIG_MTK_AKM09911),y)
+obj-y   +=  magnetometer/akm09911/
 endif
-ifeq ($(CONFIG_MTK_MMC3516X_AUTO),y)
-obj-y	+=  magnetometer/mmc3516x_auto/
-endif
+
 
 endif
 

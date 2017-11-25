@@ -4,10 +4,8 @@ include $(srctree)/drivers/misc/mediatek/Makefile.custom
 obj-y   +=  mag.o
 obj-y   +=  mag_factory.o
 
-ifeq ($(CONFIG_MTK_ST480_AUTO),y)
-obj-y	+=  st480_auto/
-endif
 
-ifeq ($(CONFIG_MTK_MMC3516X_AUTO),y)
-obj-y	+=  mmc3516x_auto/
+
+ifeq ($(CONFIG_MTK_AKM09911),y)
+obj-y	+=  akm09911/
 endif

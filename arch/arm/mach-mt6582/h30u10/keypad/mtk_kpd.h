@@ -83,5 +83,5 @@ void kpd_pmic_rstkey_handler(unsigned long pressed);
 //#define TWOKEY_REBOOT_OTHER_MODE
 #define KPD_PMIC_RSTKEY_MAP KEY_VOLUMEUP
 #define KPD_PMIC_LPRST_TD 2 /* timeout period. 0: 7sec; 1: 11sec; 2: 14sec; 3: 5sec */
-
+extern bool power_key_ps ;
 #endif

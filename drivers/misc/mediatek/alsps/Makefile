@@ -5,6 +5,10 @@ obj-y   +=  alsps.o
 obj-y   +=  alsps_factory.o
 obj-y   +=  aal_control.o
 
-ifeq ($(CONFIG_MTK_AP3220),y)
-obj-y	+=  ap3220/
+ifeq ($(CONFIG_MTK_EPL2182),y)
+obj-y	+=  EPL2182/
+endif
+
+ifeq ($(CONFIG_MTK_TMD2771_HW_AUTO),y)
+obj-y	+=  tmd2771_HW_auto/
 endif

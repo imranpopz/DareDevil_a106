@@ -197,7 +197,7 @@ static void ps_poll(unsigned long data)
 	struct alsps_context *obj = (struct alsps_context *)data;
 	if(obj != NULL)
 	{
-        //if(obj->ps_ctl.is_polling_mode)
+        if(obj->ps_ctl.is_polling_mode)
 		schedule_work(&obj->report_ps);
 	}
 }
@@ -773,7 +773,7 @@ static struct platform_driver als_ps_driver = {
 	}
 };
 
-static int alsps_real_driver_init() 
+static int alsps_real_driver_init(void) 
 {
     int i =0;
 	int err=0;
@@ -1022,6 +1022,7 @@ int als_register_control_path(struct als_control_path *ctl)
 int ps_register_control_path(struct ps_control_path *ctl)
 {
 	struct alsps_context *cxt = NULL;
+	int err =0;
 	cxt = alsps_context_obj;
 	cxt->ps_ctl.set_delay = ctl->set_delay;
 	cxt->ps_ctl.open_report_data= ctl->open_report_data;
