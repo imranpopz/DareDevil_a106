@@ -1188,7 +1188,7 @@ static void binder_transaction_priority(struct task_struct *task,
 					bool inherit_rt)
 {
 	bool inherit_fifo = t->buffer->target_node->proc->context->inherit_fifo_prio;
-	struct binder_priority desired_prio = t->priority;
+	struct binder_priority desired_prio;
 
 	if (t->set_priority_called)
 		return;
@@ -1200,6 +1200,9 @@ static void binder_transaction_priority(struct task_struct *task,
 	if (!inherit_rt && is_rt_policy(desired_prio.sched_policy) && !inherit_fifo) {
 		desired_prio.prio = NICE_TO_PRIO(0);
 		desired_prio.sched_policy = SCHED_NORMAL;
+	} else {
+		desired_prio.prio = t->priority.prio;
+		desired_prio.sched_policy = t->priority.sched_policy;
 	}
 
 	if (node_prio.prio < t->priority.prio ||
@@ -1302,7 +1305,7 @@ static struct binder_node *binder_init_node_ilocked(
 	node->cookie = cookie;
 	node->work.type = BINDER_WORK_NODE;
 	priority = flags & FLAT_BINDER_FLAG_PRIORITY_MASK;
-	node->sched_policy = (flags & FLAT_BINDER_FLAG_SCHED_POLICY_MASK) >>
+	node->sched_policy = (flags & FLAT_BINDER_FLAG_PRIORITY_MASK) >>
 		FLAT_BINDER_FLAG_SCHED_POLICY_SHIFT;
 	node->min_priority = to_kernel_prio(node->sched_policy, priority);
 	node->accept_fds = !!(flags & FLAT_BINDER_FLAG_ACCEPTS_FDS);
@@ -2744,48 +2747,6 @@ static bool binder_proc_transaction(struct binder_transaction *t,
 	return true;
 }
 
-/**
- * binder_get_node_refs_for_txn() - Get required refs on node for txn
- * @node:         struct binder_node for which to get refs
- * @proc:         returns @node->proc if valid
- * @error:        if no @proc then returns BR_DEAD_REPLY
- *
- * User-space normally keeps the node alive when creating a transaction
- * since it has a reference to the target. The local strong ref keeps it
- * alive if the sending process dies before the target process processes
- * the transaction. If the source process is malicious or has a reference
- * counting bug, relying on the local strong ref can fail.
- *
- * Since user-space can cause the local strong ref to go away, we also take
- * a tmpref on the node to ensure it survives while we are constructing
- * the transaction. We also need a tmpref on the proc while we are
- * constructing the transaction, so we take that here as well.
- *
- * Return: The target_node with refs taken or NULL if no @node->proc is NULL.
- * Also sets @proc if valid. If the @node->proc is NULL indicating that the
- * target proc has died, @error is set to BR_DEAD_REPLY
- */
-static struct binder_node *binder_get_node_refs_for_txn(
-		struct binder_node *node,
-		struct binder_proc **procp,
-		uint32_t *error)
-{
-	struct binder_node *target_node = NULL;
-
-	binder_node_inner_lock(node);
-	if (node->proc) {
-		target_node = node;
-		binder_inc_node_nilocked(node, 1, 0, NULL);
-		binder_inc_node_tmpref_ilocked(node);
-		node->proc->tmp_ref++;
-		*procp = node->proc;
-	} else
-		*error = BR_DEAD_REPLY;
-	binder_node_inner_unlock(node);
-
-	return target_node;
-}
-
 static void binder_transaction(struct binder_proc *proc,
 			       struct binder_thread *thread,
 			       struct binder_transaction_data *tr, int reply,
@@ -2888,35 +2849,43 @@ static void binder_transaction(struct binder_proc *proc,
 			ref = binder_get_ref_olocked(proc, tr->target.handle,
 						     true);
 			if (ref) {
-				target_node = binder_get_node_refs_for_txn(
-						ref->node, &target_proc,
-						&return_error);
-			} else {
-				binder_user_error("%d:%d got transaction to invalid handle\n",
-						  proc->pid, thread->pid);
-				return_error = BR_FAILED_REPLY;
+				binder_inc_node(ref->node, 1, 0, NULL);
+				target_node = ref->node;
 			}
 			binder_proc_unlock(proc);
+			if (target_node == NULL) {
+				binder_user_error("%d:%d got transaction to invalid handle\n",
+					proc->pid, thread->pid);
+				return_error = BR_FAILED_REPLY;
+				return_error_param = -EINVAL;
+				return_error_line = __LINE__;
+				goto err_invalid_target_handle;
+			}
 		} else {
 			mutex_lock(&context->context_mgr_node_lock);
 			target_node = context->binder_context_mgr_node;
-			if (target_node)
-				target_node = binder_get_node_refs_for_txn(
-						target_node, &target_proc,
-						&return_error);
-			else
+			if (target_node == NULL) {
 				return_error = BR_DEAD_REPLY;
+				mutex_unlock(&context->context_mgr_node_lock);
+				return_error_line = __LINE__;
+				goto err_no_context_mgr_node;
+			}
+			binder_inc_node(target_node, 1, 0, NULL);
 			mutex_unlock(&context->context_mgr_node_lock);
 		}
-		if (!target_node) {
-			/*
-			 * return_error is set above
-			 */
-			return_error_param = -EINVAL;
+		e->to_node = target_node->debug_id;
+		binder_node_lock(target_node);
+		target_proc = target_node->proc;
+		if (target_proc == NULL) {
+			binder_node_unlock(target_node);
+			return_error = BR_DEAD_REPLY;
 			return_error_line = __LINE__;
 			goto err_dead_binder;
 		}
-		e->to_node = target_node->debug_id;
+		binder_inner_proc_lock(target_proc);
+		target_proc->tmp_ref++;
+		binder_inner_proc_unlock(target_proc);
+		binder_node_unlock(target_node);
 		if (security_binder_transaction(proc->tsk,
 						target_proc->tsk) < 0) {
 			return_error = BR_FAILED_REPLY;
@@ -3275,8 +3244,6 @@ static void binder_transaction(struct binder_proc *proc,
 	if (target_thread)
 		binder_thread_dec_tmpref(target_thread);
 	binder_proc_dec_tmpref(target_proc);
-	if (target_node)
-		binder_dec_node_tmpref(target_node);
 	/*
 	 * write barrier to synchronize with initialization
 	 * of log entry
@@ -3296,8 +3263,6 @@ err_bad_parent:
 err_copy_data_failed:
 	trace_binder_transaction_failed_buffer_release(t->buffer);
 	binder_transaction_buffer_release(target_proc, t->buffer, offp);
-	if (target_node)
-		binder_dec_node_tmpref(target_node);
 	target_node = NULL;
 	t->buffer->transaction = NULL;
 	binder_alloc_free_buf(&target_proc->alloc, t->buffer);
@@ -3312,14 +3277,13 @@ err_bad_call_stack:
 err_empty_call_stack:
 err_dead_binder:
 err_invalid_target_handle:
+err_no_context_mgr_node:
 	if (target_thread)
 		binder_thread_dec_tmpref(target_thread);
 	if (target_proc)
 		binder_proc_dec_tmpref(target_proc);
-	if (target_node) {
+	if (target_node)
 		binder_dec_node(target_node, 1, 0);
-		binder_dec_node_tmpref(target_node);
-	}
 
 	binder_debug(BINDER_DEBUG_FAILED_TRANSACTION,
 		     "%d:%d transaction failed %d/%d, size %lld-%lld line %d\n",
