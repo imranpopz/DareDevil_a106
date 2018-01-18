@@ -36,16 +36,15 @@ echo=e
 
 # If the google toolchain 4.8 doesn't exist, clone it. 
 # If exists, export the toolchain path
-if [ ! -f /home/popz/Desktop/toolchain/arm-eabi-4.8/bin/arm-eabi-addr2line ]
+if [ ! -f /home/popz/Desktop/kernel/arm-eabi-4.8/bin/arm-eabi-addr2line ]
 then
     $e -e "####################################"
     $e -e "#       TOOLCHAIN NOT FOUND!       #"
     $e -e "####################################"
 cd ..
 git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8
-export ARCH=arm CROSS_COMPILE=/home/popz/Desktop/toolchain/arm-eabi-4.8/bin/arm-eabi-
 else
-export ARCH=arm CROSS_COMPILE=/home/popz/Desktop/toolchain/arm-eabi-4.8/bin/arm-eabi-
+export ARCH=arm CROSS_COMPILE=/home/popz/Desktop/kernel/arm-eabi-4.8/bin/arm-eabi-
 fi
 
 

@@ -1,4 +1,4 @@
-# Daredevil Project for a106
+# Daredevil Project for H30-U1O
 
 ![Daredevil](http://s24.postimg.org/snrt08gut/image.png "Daredevil Kernel logo")
 
@@ -18,7 +18,7 @@
 
   * Then, clone the project: 
 
-        $ git clone -b cm-14.1 https://github.com/GODz-Android-Dev/DareDevil_a106.git
+        $ git clone -b cm-14.1 https://github.com/imranpopz/DareDevil_h30u10.git
 
 
   * And for compile:
